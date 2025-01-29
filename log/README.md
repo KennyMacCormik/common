@@ -1,7 +1,7 @@
 # README
 
 ## Overview
-The `log` package provides a flexible, thread-safe global logging utility built on top of `log/slog`. It supports multiple output formats, dynamic log levels, and configurable outputs for seamless integration into your Go projects. The package is designed for simplicity and configurability, ensuring developers can adjust logging behavior to suit various environments.
+The `log` package provides flexible, thread-safe global logging utility built on top of `log/slog`. It supports multiple output formats, dynamic log levels, and configurable outputs for seamless integration into your Go projects. The package is designed for simplicity and configurability, ensuring developers can adjust logging behavior to suit various environments.
 
 ---
 
