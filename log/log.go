@@ -52,7 +52,7 @@ var (
 func WithJSONFormat() LoggingOptions {
 	return func() {
 		handler.Store(0)
-		storeLogger(output, logLevel.Level())
+		storeLogger(output)
 	}
 }
 
@@ -61,7 +61,7 @@ func WithJSONFormat() LoggingOptions {
 func WithTextFormat() LoggingOptions {
 	return func() {
 		handler.Store(1)
-		storeLogger(output, logLevel.Level())
+		storeLogger(output)
 	}
 }
 
@@ -77,7 +77,7 @@ func WithOutput(out io.Writer) LoggingOptions {
 		} else {
 			output = os.Stdout
 		}
-		storeLogger(output, logLevel.Level())
+		storeLogger(output)
 	}
 }
 
@@ -110,6 +110,11 @@ func Configure(options ...LoggingOptions) {
 	for _, option := range options {
 		option()
 	}
+}
+
+// CopyLogger copies the global logger and returns it.
+func CopyLogger() *slog.Logger {
+	return copyLogger()
 }
 
 // Debug logs a message at the slog.LevelDebug level.
@@ -150,8 +155,34 @@ func isNotNilOrNilPointer(out io.Writer) bool {
 	return true
 }
 
+func copyLogger() *slog.Logger {
+	mtx.Lock()
+	defer mtx.Unlock()
+
+	outCopy := output
+
+	logLevelCopy := new(slog.LevelVar)
+	logLevelCopy.Set(logLevel.Level())
+
+	if handler.Load() == 0 {
+		return slog.New(
+			slog.NewJSONHandler(
+				outCopy,
+				&slog.HandlerOptions{Level: logLevelCopy},
+			),
+		)
+	} else {
+		return slog.New(
+			slog.NewTextHandler(
+				outCopy,
+				&slog.HandlerOptions{Level: logLevelCopy},
+			),
+		)
+	}
+}
+
 // storeLogger generates new *slog.Logger with supplied values and stores it as global logger
-func storeLogger(out io.Writer, level slog.Level) {
+func storeLogger(out io.Writer) {
 	if mtx.TryLock() {
 		defer mtx.Unlock()
 	}
@@ -160,14 +191,14 @@ func storeLogger(out io.Writer, level slog.Level) {
 		globalLogger = slog.New(
 			slog.NewJSONHandler(
 				out,
-				&slog.HandlerOptions{Level: level},
+				&slog.HandlerOptions{Level: logLevel},
 			),
 		)
 	} else {
 		globalLogger = slog.New(
 			slog.NewTextHandler(
 				output,
-				&slog.HandlerOptions{Level: level},
+				&slog.HandlerOptions{Level: logLevel},
 			),
 		)
 	}

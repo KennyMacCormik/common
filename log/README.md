@@ -120,6 +120,9 @@ time=2025-01-29T01:44:46.887+03:00 level=INFO msg="Informational message"
 
 ### Exported Functions
 
+#### `func CopyLogger(msg string, args ...any)`
+CopyLogger copies the global logger and returns it.
+
 #### `func Configure(options ...LoggingOptions)`
 Configures the global logger with the specified options. Options can include log level, format, and output.
 

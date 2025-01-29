@@ -54,6 +54,8 @@ func changeStdout() (*os.File, *os.File, func()) {
 }
 
 func TestLog_ValidateDefaults(t *testing.T) {
+	defer resetLoggerConf()
+
 	require.Equal(t, slog.LevelWarn, logLevel.Level())
 	assert.Equal(t, os.Stdout, output)
 }
@@ -62,31 +64,43 @@ func TestLog_WithLogLevel(t *testing.T) {
 	defer resetLoggerConf()
 
 	t.Run("debug", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		WithLogLevel("debug")()
 		require.Equal(t, slog.LevelDebug, logLevel.Level())
 	})
 
 	t.Run("info", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		WithLogLevel("info")()
 		require.Equal(t, slog.LevelInfo, logLevel.Level())
 	})
 
 	t.Run("warn", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		WithLogLevel("warn")()
 		require.Equal(t, slog.LevelWarn, logLevel.Level())
 	})
 
 	t.Run("error", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		WithLogLevel("error")()
 		require.Equal(t, slog.LevelError, logLevel.Level())
 	})
 
 	t.Run("empty string", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		WithLogLevel("")()
 		require.Equal(t, slog.LevelWarn, logLevel.Level())
 	})
 
 	t.Run("random string", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		val := getRandomString()
 		WithLogLevel(val)()
 		require.Equal(t, slog.LevelWarn, logLevel.Level())
@@ -115,6 +129,8 @@ func TestLog_WithXXXFormat(t *testing.T) {
 	defer resetLoggerConf()
 
 	t.Run("WithJSONFormat", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		WithJSONFormat()()
 
 		handler := reflect.ValueOf(globalLogger.Handler())
@@ -126,6 +142,8 @@ func TestLog_WithXXXFormat(t *testing.T) {
 	})
 
 	t.Run("WithTextFormat", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		WithTextFormat()()
 
 		handler := reflect.ValueOf(globalLogger.Handler())
@@ -141,6 +159,8 @@ func TestLog_Configure(t *testing.T) {
 	defer resetLoggerConf()
 
 	t.Run("WithJSONFormat", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		Configure(WithJSONFormat())
 
 		handler := reflect.ValueOf(globalLogger.Handler())
@@ -152,6 +172,8 @@ func TestLog_Configure(t *testing.T) {
 	})
 
 	t.Run("WithTextFormat", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		Configure(WithTextFormat())
 
 		handler := reflect.ValueOf(globalLogger.Handler())
@@ -164,6 +186,8 @@ func TestLog_Configure(t *testing.T) {
 
 	t.Run("WithOutput", func(t *testing.T) {
 		t.Run("correct io.Writer", func(t *testing.T) {
+			defer resetLoggerConf()
+
 			r, w, closer := changeStdout()
 			defer closer()
 
@@ -179,6 +203,8 @@ func TestLog_Configure(t *testing.T) {
 		})
 
 		t.Run("nil value", func(t *testing.T) {
+			defer resetLoggerConf()
+
 			Configure(WithOutput(nil))
 
 			handler := reflect.ValueOf(globalLogger.Handler())
@@ -195,6 +221,8 @@ func TestLog_Configure(t *testing.T) {
 		})
 
 		t.Run("nil pointer", func(t *testing.T) {
+			defer resetLoggerConf()
+
 			Configure(WithOutput((*os.File)(nil)))
 
 			handler := reflect.ValueOf(globalLogger.Handler())
@@ -212,11 +240,15 @@ func TestLog_Configure(t *testing.T) {
 	})
 
 	t.Run("WithLogLevel", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		Configure(WithLogLevel("debug"))
 		require.Equal(t, logLevel.Level(), slog.LevelDebug)
 	})
 
 	t.Run("several", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		r, w, closer := changeStdout()
 		defer closer()
 		Configure(WithTextFormat(), WithLogLevel("info"), WithOutput(w))
@@ -243,6 +275,8 @@ func TestLog_Emitters(t *testing.T) {
 	defer resetLoggerConf()
 
 	t.Run("debug", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		r, w, closer := changeStdout()
 		defer closer()
 
@@ -259,6 +293,8 @@ func TestLog_Emitters(t *testing.T) {
 	})
 
 	t.Run("info", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		r, w, closer := changeStdout()
 		defer closer()
 
@@ -277,6 +313,8 @@ func TestLog_Emitters(t *testing.T) {
 	})
 
 	t.Run("warn", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		r, w, closer := changeStdout()
 		defer closer()
 
@@ -295,11 +333,12 @@ func TestLog_Emitters(t *testing.T) {
 	})
 
 	t.Run("error", func(t *testing.T) {
+		defer resetLoggerConf()
+
 		r, w, closer := changeStdout()
 		defer closer()
 
-		WithLogLevel("error")()
-		WithOutput(w)()
+		Configure(WithOutput(w), WithLogLevel("error"))
 		val := getRandomString()
 		Error(val)
 
@@ -310,5 +349,64 @@ func TestLog_Emitters(t *testing.T) {
 
 		require.Contains(t, out.String(), val)
 		assert.Contains(t, out.String(), "\"level\":\"ERROR\"")
+	})
+}
+
+func TestCopyLogger(t *testing.T) {
+	defer resetLoggerConf()
+	t.Run("JSON", func(t *testing.T) {
+		defer resetLoggerConf()
+
+		r, w, closer := changeStdout()
+		defer closer()
+
+		Configure(WithOutput(w))
+
+		lg := CopyLogger()
+		require.NotNil(t, lg)
+		assert.Equal(t, globalLogger, lg)
+
+		Configure(WithLogLevel("debug"))
+		require.NotEqual(t, globalLogger, lg)
+
+		Debug("globalLogger")
+		lg.Debug("copyLogger")
+
+		_ = w.Sync()
+		_ = w.Close()
+		out := &bytes.Buffer{}
+		_, _ = io.Copy(out, r)
+
+		require.Contains(t, out.String(), "globalLogger")
+		assert.NotContains(t, out.String(), "copyLogger")
+		assert.Contains(t, out.String(), "\"level\":\"DEBUG\"")
+	})
+
+	t.Run("Text", func(t *testing.T) {
+		defer resetLoggerConf()
+
+		r, w, closer := changeStdout()
+		defer closer()
+
+		Configure(WithOutput(w), WithTextFormat())
+
+		lg := CopyLogger()
+		require.NotNil(t, lg)
+		assert.Equal(t, globalLogger, lg)
+
+		Configure(WithLogLevel("info"))
+		require.NotEqual(t, globalLogger, lg)
+
+		Info("globalLogger")
+		lg.Info("copyLogger")
+
+		_ = w.Sync()
+		_ = w.Close()
+		out := &bytes.Buffer{}
+		_, _ = io.Copy(out, r)
+
+		require.Contains(t, out.String(), "globalLogger")
+		assert.NotContains(t, out.String(), "copyLogger")
+		assert.Contains(t, out.String(), "level=INFO")
 	})
 }
