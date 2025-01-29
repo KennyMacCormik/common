@@ -1,4 +1,4 @@
-package router
+package gin_factory
 
 import (
 	"net/http"

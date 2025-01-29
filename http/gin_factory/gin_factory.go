@@ -1,6 +1,6 @@
-// Package router provides a GinFactory for managing middleware and handlers in a modular way.
+// Package gin_factory provides a GinFactory for managing middleware and handlers in a modular way.
 // It simplifies the creation of a Gin router with preconfigured middleware and route handlers.
-package router
+package gin_factory
 
 import "github.com/gin-gonic/gin"
 
