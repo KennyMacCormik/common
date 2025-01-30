@@ -117,7 +117,6 @@ func newValidator() *validator.Validate {
 // Validation Rules:
 //   - The input mustn't be nil.
 //   - If the input is a pointer, it mustn't be uninitialized (nil pointer).
-//   - The input must be of type `struct`.
 func validateInputStruct(s any) error {
 	if s == nil {
 		return fmt.Errorf("input is nil")
@@ -128,10 +127,6 @@ func validateInputStruct(s any) error {
 		if val.IsNil() {
 			return fmt.Errorf("input is a nil pointer")
 		}
-	}
-
-	if val.Kind() != reflect.Struct {
-		return fmt.Errorf("input is not a struct: got %s", val.Kind())
 	}
 
 	return nil
