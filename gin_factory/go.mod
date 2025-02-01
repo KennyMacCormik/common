@@ -1,4 +1,4 @@
-module github.com/KennyMacCormik/common/http/gin_factory
+module github.com/KennyMacCormik/common/gin_factory
 
 go 1.23.4
 
